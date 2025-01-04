@@ -1,0 +1,20 @@
+{
+    "name": "fan724/blog_cli",
+    "authors": [
+        {
+            "name": "fan724"
+        }
+    ],
+    "require": {
+        "php": "^8.1.31"
+    },
+    "autoload": {
+        "files": [
+            "src/blog.php",
+            "src/helpers.php",
+            "src/main.php",
+            "fread.php",
+            "fwrite.php"
+        ]
+    }
+}
