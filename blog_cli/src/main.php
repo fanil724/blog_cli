@@ -14,7 +14,6 @@ function main(): string
 
 function parseCommand(): string
 {
-
     $functionName = 'handleHelp';
     if (isset($_SERVER['argv'][1])) {
         $functionName = match ($_SERVER['argv'][1]) {
@@ -23,10 +22,10 @@ function parseCommand(): string
             'read-post' => 'readPost',
             'readall-post' => 'readAllPosts',
             'clear-post' => 'clearPosts',
+            'delete-post' => 'deletePosts',
             'help' => $functionName,
             default => ""
         };
     }
-
     return $functionName;
 }

@@ -26,13 +26,11 @@ function addPost(): string
 
 function readAllPosts(): string
 {
-
     return arrayToString(read());
 }
 
 function readPost(): string
 {
-
     if (isset($_SERVER['argv'][2])) {
         $posts = read();
         $idpost = $_SERVER['argv'][2];
@@ -51,6 +49,34 @@ function readPost(): string
     }
 
     return handleError("Введите номер поста");
+}
+
+function  deletePosts()
+{
+    if (!isset($_SERVER['argv'][2])) {
+       return "Введите номер поста";
+    }
+    $posts = read();
+    if(count($posts)===0){
+        return handleError("Постов нет");
+    }
+
+    $idpost = (int)$_SERVER['argv'][2];
+    if (!is_numeric($idpost)) {
+        return handleError("Введите номер поста");
+    }
+
+    if ($idpost < 0 || $idpost >= count($posts)) {
+        return handleError("Введите номер поста от 0 до " . count($posts));
+    }
+
+    array_splice($posts, $idpost-1,1);
+    print_r($posts);
+    if (writeArr($posts)===false) {
+        return "Пост не удален";
+    }
+
+    return "Пост удален";
 }
 
 function clearPosts(): string
