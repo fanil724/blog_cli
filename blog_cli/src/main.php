@@ -23,6 +23,7 @@ function parseCommand(): string
             'readall-post' => 'readAllPosts',
             'clear-post' => 'clearPosts',
             'delete-post' => 'deletePosts',
+            'victorina' => 'startVictorina',
             'help' => $functionName,
             default => ""
         };

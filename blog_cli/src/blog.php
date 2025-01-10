@@ -21,7 +21,13 @@ function addPost(): string
     //print_r($posts);
     $post = implode(" ::: ", $posts);
 
-    return write($post);
+    if (!write($post)) {
+        return "Пост не добавлен: " . $post;
+    }
+
+    return "Пост добавлен: " . $post;
+
+
 }
 
 function readAllPosts(): string
@@ -33,6 +39,10 @@ function readPost(): string
 {
     if (isset($_SERVER['argv'][2])) {
         $posts = read();
+        if (count($posts)==0) {
+            return handleError("Постов нет");
+        }
+
         $idpost = $_SERVER['argv'][2];
         // print($idpost . PHP_EOL);
         if (!is_numeric($idpost)) {
@@ -71,7 +81,7 @@ function  deletePosts()
     }
 
     array_splice($posts, $idpost-1,1);
-    print_r($posts);
+    //print_r($posts);
     if (writeArr($posts)===false) {
         return "Пост не удален";
     }
@@ -81,7 +91,11 @@ function  deletePosts()
 
 function clearPosts(): string
 {
-    return clear();
+    if (!clearPosts()) {
+        return "Посты не удалены";
+    }
+
+    return "Все посты удалены";
 }
 
 function searchPost(): string

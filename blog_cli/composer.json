@@ -13,6 +13,7 @@
             "src/blog.php",
             "src/helpers.php",
             "src/main.php",
+            "src/victorina.php",
             "fread.php",
             "fwrite.php"
         ]
