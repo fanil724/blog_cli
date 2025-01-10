@@ -15,6 +15,8 @@ search-post - найти пост
 read-post - считать пост по ид
 readall-post - считат все посты
 clear-post - удалить все посты
+delete-post - удалить посты по ид
+victorina - участвовать в новогодней викторине
 HELP;
     return $help;
 }
