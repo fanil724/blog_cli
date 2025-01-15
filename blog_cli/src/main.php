@@ -24,6 +24,8 @@ function parseCommand(): string
             'clear-post' => 'clearPosts',
             'delete-post' => 'deletePosts',
             'victorina' => 'startVictorina',
+            'init'=>'initBD',
+            'seed'=>'seedBD',
             'help' => $functionName,
             default => ""
         };

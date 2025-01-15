@@ -4,40 +4,51 @@ function addPost(): string
 {
     $header = "";
     $body = "";
-
-    //Заголовок и тело поста считывайте тут же через readline
-    //обработайте ошибки
-    //в случае успеха верните тект что пост добавлен
+    $db = getDb();
     do {
         $header = readline("Введите заголовок поста: ");
         $body = readline("Введите текст поста: ");
     } while (validate($header) || validate($body));
-    $posts[] = $header;
-    $posts[] = $body;
 
-    date_default_timezone_set("Europe/Moscow");
-    $dateime = date('d.m.Y h:i');
-    $posts[] = $dateime;
-    //print_r($posts);
-    $post = implode(" ::: ", $posts);
+    $categories = readAllСategory();
 
-    if (!write($post)) {
-        return "Пост не добавлен: " . $post;
+    foreach ($categories as $categ) {
+        echo implode(": ", $categ) . PHP_EOL;
     }
+    do {
+        $id = (int)readline("Введите id категории: ");
+        if ($id < 1 || $id > count($categories)) {
+            $id = null;
+        }
+    } while (is_null($id));
 
-    return "Пост добавлен: " . $post;
+    $strQuery = "INSERT INTO posts (title, text, id_category) VALUES(:title, :text, :id_category)";
+    $stmt = $db->prepare($strQuery);
+    $stmt->execute(['title' => $header, 'text' => $body, 'id_category' => $id]);
 
-
+    if (!$stmt) {
+        return "Пост не добавлен" . PHP_EOL;
+    }
+    return "Пост добавлен" . PHP_EOL;
 }
 
 function readAllPosts(): string
 {
-    return arrayToString(read());
+    $db=getDB();
+    $stmt=$db->query("SELECT p.id, p.title, p.text, c.category
+        FROM posts p
+        JOIN categories c 
+        ON c.id=p.id_category;");
+    $result=$stmt->fetchAll();
+    if (!$result) {
+        return "Нет постов";
+    }
+    return arrayToString($result);
 }
 
 function readPost(): string
 {
-    if (isset($_SERVER['argv'][2])) {
+  /*  if (isset($_SERVER['argv'][2])) {
         $posts = read();
         if (count($posts)==0) {
             return handleError("Постов нет");
@@ -58,58 +69,69 @@ function readPost(): string
         return $str;
     }
 
-    return handleError("Введите номер поста");
+    return handleError("Введите номер поста");*/
+    $db=getDB();
+    do {
+        $id = (int)readline("Введите id поста: ");
+    } while (empty($id));
+    $stmt = $db->prepare("SELECT p.id, p.title, p.text ,c.category FROM posts p JOIN categories c ON p.id_category = c.id WHERE p.id = :id;");
+    $stmt->execute(['id' => $id]);
+
+    $result = $stmt->fetch();
+    if (!$result) {
+        return "Пост с id = $id не найден";
+    }
+    return implode(" ", $result) . PHP_EOL;
 }
 
 function  deletePosts()
 {
-    if (!isset($_SERVER['argv'][2])) {
-       return "Введите номер поста";
-    }
-    $posts = read();
-    if(count($posts)===0){
-        return handleError("Постов нет");
-    }
+    $db = getDb();
 
-    $idpost = (int)$_SERVER['argv'][2];
-    if (!is_numeric($idpost)) {
-        return handleError("Введите номер поста");
-    }
+    do {
+        $id = (int)readline("Введите id поста: ");
+    } while (empty($id));
 
-    if ($idpost < 0 || $idpost >= count($posts)) {
-        return handleError("Введите номер поста от 0 до " . count($posts));
-    }
+    $stmt = $db->prepare("DELETE FROM posts  WHERE id = :id;");
+    $stmt->bindParam(':id', $id);
+    $stmt->execute();
 
-    array_splice($posts, $idpost-1,1);
-    //print_r($posts);
-    if (writeArr($posts)===false) {
-        return "Пост не удален";
+    if (!$stmt->rowCount()) {
+        return "Пост с id = $id не найден";
     }
-
-    return "Пост удален";
+    return "Пост с id = $id удален" . PHP_EOL;
 }
 
 function clearPosts(): string
 {
-    if (!clearPosts()) {
+    $db = getDb();
+    $sql = "DELETE FROM posts;";
+    $countRows = $db->exec($sql);
+    if (!$countRows) {
         return "Посты не удалены";
     }
 
-    return "Все посты удалены";
+    return "Постов удалено $countRows";
 }
 
 function searchPost(): string
 {
-
+    $db = getDb();
     do {
         $contentPost = readline("Введите текст для поиска: ");
     } while (validate($contentPost));
-    $posts = read();
+    $stmt = $db->prepare("SELECT p.id, p.title, p.text ,c.category 
+    FROM posts p JOIN categories c 
+    ON p.id_category = c.id 
+    WHERE p.title like :content OR p.text like :content;");
+    $stmt->execute(['content' => "%$contentPost%"]);
 
-    $searchPosts = filterPost($posts, $contentPost);
-    if (count($searchPosts) <= 0) {
-        return handleError("Не найденно постов с такими данными: $contentPost");
+    $searchPosts = $stmt->fetchAll();
+
+    if (count($searchPosts) < 1) {
+        return "Пост с строкой = $contentPost не найден";
     }
+
     return arrayToString($searchPosts);
 }
 function validate($str): bool
@@ -121,20 +143,25 @@ function validate($str): bool
     return false;
 }
 
-function filterPost(mixed $posts, string $contentPost): mixed
-{
-    $filterPosts = array();
-    foreach ($posts as $post) {
-        if (str_contains($post, $contentPost)) {
-            $filterPosts[] = $post;
-        }
-    }
-    return $filterPosts;
-}
 
 function arrayToString(mixed $posts): string
 {
-    $strread = implode("", $posts);
-    $str = str_replace(":::", " ", $strread);
-    return $str;
+    $strread = "";
+    foreach ($posts as $post) {
+        $strread = $strread . "id: " . $post["id"] . " title: " . $post["title"] . " text: " . $post["text"] . " category: " . $post["category"] . PHP_EOL;
+        // $strread = $strread . implode(" ", $post) . PHP_EOL;
+    }
+
+    return $strread;
+}
+function readAllСategory(): mixed
+{
+    $db = getDb();
+    $stmt = $db->query("SELECT * FROM categories");
+    $result = $stmt->fetchAll();
+    if (!$result) {
+        return "Нет категории";
+    }
+
+    return $result;
 }
